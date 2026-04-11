@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/config/routes";
 import type { LoginPageVm } from "@/modules/auth/viewModel/login/loginPageVm";
 
@@ -59,13 +60,13 @@ export function LoginPageView({ vm }: { vm: LoginPageVm }) {
           />
         </label>
 
-        <button
+        <Button
           type="submit"
           disabled={vm.pending}
-          className="mt-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="mt-2 h-auto min-h-10 w-full py-2.5"
         >
           {vm.pending ? "Signing in…" : "Sign in"}
-        </button>
+        </Button>
 
         <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
           No account?{" "}

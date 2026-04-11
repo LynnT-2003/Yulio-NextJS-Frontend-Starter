@@ -1,12 +1,50 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/config/routes";
 import type { RegisterPageVm } from "@/modules/auth/viewModel/register/registerPageVm";
 
+function PasswordHint({ vm }: { vm: RegisterPageVm }) {
+  const { passwordFeedback } = vm;
+  if (passwordFeedback.kind === "hidden") return null;
+  if (passwordFeedback.kind === "invalid") {
+    return (
+      <span className="text-xs text-red-600 dark:text-red-400 pt-2" role="status">
+        {passwordFeedback.issues[0]}
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs text-emerald-600 dark:text-emerald-400" role="status">
+      {/* Password meets requirements */}
+    </span>
+  );
+}
+
+function ConfirmHint({ vm }: { vm: RegisterPageVm }) {
+  const { confirmFeedback } = vm;
+  if (confirmFeedback.kind === "hidden") return null;
+  if (confirmFeedback.kind === "mismatch") {
+    return (
+      <span className="text-xs text-red-600 dark:text-red-400 pt-2" role="status">
+        Passwords do not match.
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs text-emerald-600 dark:text-emerald-400 pt-2" role="status">
+      Passwords match
+    </span>
+  );
+}
+
 export function RegisterPageView({ vm }: { vm: RegisterPageVm }) {
+  const confirmInvalid = vm.confirmFeedback.kind === "mismatch";
+
   return (
     <form
+      noValidate
       onSubmit={vm.onSubmit}
       className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
@@ -66,24 +104,41 @@ export function RegisterPageView({ vm }: { vm: RegisterPageVm }) {
         <input
           name="password"
           type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
+          autoComplete="off"
+          spellCheck={false}
           maxLength={64}
           value={vm.password}
           onChange={(e) => vm.setPassword(e.target.value)}
           className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
         />
-        <span className="text-xs text-zinc-500">8–64 characters (Nest validation).</span>
+        <PasswordHint vm={vm} />
       </label>
 
-      <button
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+          Confirm password
+        </span>
+        <input
+          name="confirmPassword"
+          type="password"
+          autoComplete="off"
+          spellCheck={false}
+          maxLength={64}
+          value={vm.confirmPassword}
+          onChange={(e) => vm.setConfirmPassword(e.target.value)}
+          aria-invalid={confirmInvalid}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+        <ConfirmHint vm={vm} />
+      </label>
+
+      <Button
         type="submit"
-        disabled={vm.pending}
-        className="mt-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        disabled={vm.pending || !vm.canSubmit}
+        className="mt-2 h-auto min-h-10 w-full py-2.5"
       >
         {vm.pending ? "Creating…" : "Create account"}
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
         Already have an account?{" "}

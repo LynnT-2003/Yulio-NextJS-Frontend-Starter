@@ -7,17 +7,19 @@ import { Navbar } from "@/modules/layout/Navbar";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "OneForAll · Next.js auth client",
+  title: "Yulio · Frontend Kit Demo",
   description:
-    "Production-grade SPA auth against Nest: JWT, refresh rotation, OAuth providers.",
+    "Pemo for Yulio’s Frontend Kit: Yulio’s Next.js app for JWT, refresh rotation, and OAuth against the Nest API.",
 };
 
 export default function RootLayout({
@@ -28,9 +30,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} ${geistSans.className} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950">
+      <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
           <Navbar />
           <main className="flex flex-1 flex-col">{children}</main>

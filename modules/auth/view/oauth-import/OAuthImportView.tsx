@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import type { OAuthImportVm } from "@/modules/auth/viewModel/oauth-import/oauthImportVm";
 
 export function OAuthImportView({ vm }: { vm: OAuthImportVm }) {
@@ -47,12 +48,12 @@ export function OAuthImportView({ vm }: { vm: OAuthImportVm }) {
         />
       </label>
 
-      <button
+      <Button
         type="submit"
-        className="rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+        className="h-auto min-h-10 w-full bg-emerald-700 py-2.5 text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
       >
         Apply session &amp; go to account
-      </button>
+      </Button>
     </form>
   );
 }
