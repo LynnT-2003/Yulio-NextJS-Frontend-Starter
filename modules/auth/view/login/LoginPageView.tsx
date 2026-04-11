@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/config/routes";
 import type { LoginPageVm } from "@/modules/auth/viewModel/login/loginPageVm";
 
-export function LoginPageView({ vm }: { vm: LoginPageVm }) {
+export function LoginPageView({
+  vm,
+  showSuspendedNotice = false,
+}: {
+  vm: LoginPageVm;
+  showSuspendedNotice?: boolean;
+}) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 px-4 py-12 sm:px-6">
       <form
@@ -20,6 +26,16 @@ export function LoginPageView({ vm }: { vm: LoginPageVm }) {
             Email and password against your Nest API (local strategy).
           </p>
         </div>
+
+        {showSuspendedNotice ? (
+          <p
+            className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+            role="status"
+          >
+            Your account has been suspended. You can&apos;t use the app until an
+            administrator restores access. Contact support if you think this is a mistake.
+          </p>
+        ) : null}
 
         {vm.error ? (
           <p

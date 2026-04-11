@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tokenStore } from "@/lib/domain/api/tokenStore";
 import { getCurrentUser } from "@/lib/domain/user/user-api";
 import { routes } from "@/lib/config/routes";
+import { ApiError } from "@/lib/domain/api/ApiError";
 import { useAuth } from "@/providers/auth-provider";
 
 export type OAuthCallbackVm = {
@@ -50,6 +51,9 @@ export function useOAuthCallbackVm(): OAuthCallbackVm {
         router.replace(routes.account);
       } catch (e: unknown) {
         if (cancelled) return;
+        if (e instanceof ApiError && e.isAccountSuspended) {
+          return;
+        }
         tokenStore.clear();
         setError(e instanceof Error ? e.message : "Could not complete sign-in");
       }

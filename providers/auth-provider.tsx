@@ -16,6 +16,11 @@ import {
   type RegisterBody,
 } from "../lib/domain/auth/auth-api";
 import { getCurrentUser } from "../lib/domain/user/user-api";
+import {
+  setAccountSuspendedHandler,
+  setSessionExpiredHandler,
+} from "../lib/domain/api/NetworkManager";
+import { ApiError } from "../lib/domain/api/ApiError";
 import { routes } from "../lib/config/routes";
 
 export type AuthContextValue = {
@@ -49,6 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setReady(true);
   }, []);
+
+  const clearClientSession = React.useCallback(() => {
+    tokenStore.clear();
+    clearPersistedSession();
+    setUser(null);
+  }, []);
+
+  React.useEffect(() => {
+    setSessionExpiredHandler(() => {
+      clearClientSession();
+      router.replace(routes.login);
+    });
+    setAccountSuspendedHandler(() => {
+      clearClientSession();
+      router.replace(`${routes.login}?suspended=1`);
+    });
+  }, [router, clearClientSession]);
 
   const applyAuthResponse = React.useCallback((auth: AuthResponse) => {
     const userId = userIdFromAuthUser(auth.user);
@@ -95,21 +117,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         /* clear client session regardless */
       }
     }
-    tokenStore.clear();
-    clearPersistedSession();
-    setUser(null);
+    clearClientSession();
     router.push(routes.home);
-  }, [router]);
+  }, [router, clearClientSession]);
 
   const refreshUser = React.useCallback(async () => {
-    const next = await getCurrentUser();
-    setUser(next);
-    const p = readPersistedSession();
-    if (p) {
-      writePersistedSession({
-        ...p,
-        user: next,
-      });
+    try {
+      const next = await getCurrentUser();
+      setUser(next);
+      const p = readPersistedSession();
+      if (p) {
+        writePersistedSession({
+          ...p,
+          user: next,
+        });
+      }
+    } catch (e) {
+      if (e instanceof ApiError && e.isAccountSuspended) {
+        return;
+      }
+      throw e;
     }
   }, []);
 

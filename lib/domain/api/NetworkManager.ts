@@ -1,5 +1,6 @@
 import NetworkConfig from "./NetworkConfig";
 import ApiStatusCodes from "./ApiStatusCodes";
+import { isAccountSuspendedMessage } from "./account-suspended";
 import { ApiError } from "./ApiError";
 import { tokenStore } from "./tokenStore";
 
@@ -23,6 +24,13 @@ export const setSessionExpiredHandler = (fn: OnSessionExpired) => {
   _onSessionExpired = fn;
 };
 
+type OnAccountSuspended = () => void;
+let _onAccountSuspended: OnAccountSuspended = () => { };
+
+export const setAccountSuspendedHandler = (fn: OnAccountSuspended) => {
+  _onAccountSuspended = fn;
+};
+
 const wwwAuthenticateSuggestsTokenRefresh = (header: string | null): boolean => {
   if (!header) return false;
   return /Bearer[^,]*error\s*=\s*"(invalid_token|expired_token)"/i.test(header) ||
@@ -40,6 +48,7 @@ const shouldAttemptTokenRefreshFromResponse = (
   data: Record<string, unknown>
 ): boolean => {
   if (response.status !== ApiStatusCodes.UNAUTHORIZED) return false;
+  if (isAccountSuspendedMessage(data.message)) return false;
   if (wwwAuthenticateSuggestsTokenRefresh(response.headers.get("WWW-Authenticate"))) {
     return true;
   }
@@ -119,11 +128,16 @@ const responseHandler = async <T>(response: Response): Promise<T> => {
     const message =
       typeof msg === "string" && msg ? msg : "An error occurred";
 
+    const isSuspended =
+      response.status === ApiStatusCodes.UNAUTHORIZED &&
+      isAccountSuspendedMessage(message);
+
     throw new ApiError({
       message,
       statusCode: response.status,
       errorTitle: getErrorTitle(response.status),
       shouldAttemptTokenRefresh: shouldAttemptTokenRefreshFromResponse(response, body),
+      isAccountSuspended: isSuspended,
     });
   }
 
@@ -136,7 +150,9 @@ const responseHandler = async <T>(response: Response): Promise<T> => {
 class NetworkManager {
   private static instance: NetworkManager;
   private refreshPromise: Promise<string | null> | null = null;
-  private sessionExpiredHandled = false;
+  private sessionInvalidateHandled = false;
+  /** When refresh returns 401 Account suspended, skip `handleSessionExpired` (suspension already cleared the session). */
+  private refreshEndedWithAccountSuspended = false;
 
   static getInstance(): NetworkManager {
     if (!NetworkManager.instance) {
@@ -149,6 +165,8 @@ class NetworkManager {
     const refreshToken = tokenStore.getRefreshToken();
     const userId = tokenStore.getUserId();
     if (!refreshToken || !userId) return null;
+
+    this.refreshEndedWithAccountSuspended = false;
 
     try {
       const res = await fetch(NetworkConfig.shared.authRefreshUrl(), {
@@ -164,7 +182,13 @@ class NetworkManager {
           ? (parsed as Record<string, unknown>)
           : {};
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (isAccountSuspendedMessage(body.message)) {
+          this.refreshEndedWithAccountSuspended = true;
+          this.handleAccountSuspended();
+        }
+        return null;
+      }
 
       const data = (body.data ?? parsed) as {
         accessToken?: string;
@@ -185,12 +209,22 @@ class NetworkManager {
   }
 
   private handleSessionExpired(): void {
-    if (this.sessionExpiredHandled) return;
-    this.sessionExpiredHandled = true;
+    if (this.sessionInvalidateHandled) return;
+    this.sessionInvalidateHandled = true;
     tokenStore.clear();
     _onSessionExpired();
     setTimeout(() => {
-      this.sessionExpiredHandled = false;
+      this.sessionInvalidateHandled = false;
+    }, 3000);
+  }
+
+  private handleAccountSuspended(): void {
+    if (this.sessionInvalidateHandled) return;
+    this.sessionInvalidateHandled = true;
+    tokenStore.clear();
+    _onAccountSuspended();
+    setTimeout(() => {
+      this.sessionInvalidateHandled = false;
     }, 3000);
   }
 
@@ -213,6 +247,10 @@ class NetworkManager {
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;
 
+      if (error.isAccountSuspended && ctx.hadBearer) {
+        this.handleAccountSuspended();
+      }
+
       if (this.canTryRefresh(error, ctx)) {
         if (!this.refreshPromise) {
           this.refreshPromise = this.silentRefresh().finally(() => {
@@ -223,7 +261,10 @@ class NetworkManager {
         const newToken = await this.refreshPromise;
 
         if (!newToken) {
-          this.handleSessionExpired();
+          if (!this.refreshEndedWithAccountSuspended) {
+            this.handleSessionExpired();
+          }
+          this.refreshEndedWithAccountSuspended = false;
           throw error;
         }
 
