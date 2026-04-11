@@ -1,32 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../../providers/auth-provider";
-import { parseAuthResponseFromPastedJson } from "../lib/parse-oauth-json";
-import { routes } from "../../../lib/config/routes";
+import type { OAuthImportVm } from "@/modules/auth/viewModel/oauth-import/oauthImportVm";
 
-export function OAuthJsonImport() {
-  const { applyAuthResponse } = useAuth();
-  const router = useRouter();
-  const [text, setText] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
-
-  function onApply(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    try {
-      const auth = parseAuthResponseFromPastedJson(text);
-      applyAuthResponse(auth);
-      router.push(routes.account);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid JSON");
-    }
-  }
-
+export function OAuthImportView({ vm }: { vm: OAuthImportVm }) {
   return (
     <form
-      onSubmit={onApply}
+      onSubmit={vm.onApply}
       className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div>
@@ -46,12 +25,12 @@ export function OAuthJsonImport() {
         </p>
       </div>
 
-      {error ? (
+      {vm.error ? (
         <p
           className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200"
           role="alert"
         >
-          {error}
+          {vm.error}
         </p>
       ) : null}
 
@@ -60,8 +39,8 @@ export function OAuthJsonImport() {
           Response JSON
         </span>
         <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={vm.text}
+          onChange={(e) => vm.setText(e.target.value)}
           rows={12}
           placeholder='{ "success": true, "data": { "user": { ... }, "tokens": { ... } } }'
           className="font-mono text-xs rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"

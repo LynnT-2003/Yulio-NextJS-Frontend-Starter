@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { routes } from "../../../lib/config/routes";
-import { useAuth } from "../../../providers/auth-provider";
+import { routes } from "@/lib/config/routes";
+import type { HomePageVm } from "@/modules/home/viewModel/homePageVm";
 
-export function HomeHero() {
-  const { user, ready } = useAuth();
+export function HomePageView({ vm }: { vm: HomePageVm }) {
+  const { user, ready } = vm;
 
   return (
     <section className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-20 sm:px-6">

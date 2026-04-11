@@ -1,10 +1,10 @@
-import type { AuthResponse } from "../../../lib/types/api";
+import type { AuthResponse } from "@/lib/types/api";
 
 /**
  * Parse pasted JSON from an OAuth callback (Nest wraps success in `{ data }`).
  * Accepts full envelope or raw `{ user, tokens }`.
  *
- * Lives under `features/auth` — UI / dev-tooling only, not part of the HTTP client.
+ * UI / dev-tooling only — not part of NetworkManager.
  */
 export function parseAuthResponseFromPastedJson(text: string): AuthResponse {
   const trimmed = text.trim();

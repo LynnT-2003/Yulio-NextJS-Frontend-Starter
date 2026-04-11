@@ -1,28 +1,10 @@
 "use client";
 
-import * as React from "react";
-import { useAuth } from "../../../providers/auth-provider";
-import { UserProfilePanel } from "./UserProfilePanel";
+import type { AccountPageVm } from "@/modules/account/viewModel/accountPageVm";
+import { UserProfilePanel } from "@/modules/account/components/UserProfilePanel";
 
-export function AccountDashboard() {
-  const { user, refreshUser } = useAuth();
-  const [syncError, setSyncError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    setSyncError(null);
-    refreshUser().catch((e: unknown) => {
-      if (cancelled) return;
-      const msg =
-        e && typeof e === "object" && "message" in e
-          ? String((e as { message: unknown }).message)
-          : "Could not sync profile from API";
-      setSyncError(msg);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [refreshUser]);
+export function AccountPageView({ vm }: { vm: AccountPageVm }) {
+  const { user, syncError } = vm;
 
   if (!user) return null;
 

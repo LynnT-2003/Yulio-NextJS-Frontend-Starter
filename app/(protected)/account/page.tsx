@@ -1,5 +1,9 @@
-import { AccountDashboard } from "../../../features/account/components/AccountDashboard";
+"use client";
+
+import { useAccountPageVm } from "@/modules/account/viewModel/accountPageVm";
+import { AccountPageView } from "@/modules/account/view/AccountPageView";
 
 export default function AccountPage() {
-  return <AccountDashboard />;
+  const vm = useAccountPageVm();
+  return <AccountPageView vm={vm} />;
 }

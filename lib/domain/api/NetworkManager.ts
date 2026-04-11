@@ -1,7 +1,7 @@
 import NetworkConfig from "./NetworkConfig";
 import ApiStatusCodes from "./ApiStatusCodes";
+import { ApiError } from "./ApiError";
 import { tokenStore } from "./tokenStore";
-import { API_AUTH_ERROR_TOKEN_EXPIRED } from "../../types/api";
 
 export type RequestOptions = RequestInit & {
   _retry?: boolean;
@@ -23,43 +23,16 @@ export const setSessionExpiredHandler = (fn: OnSessionExpired) => {
   _onSessionExpired = fn;
 };
 
-// ─── Error Response ───────────────────────────────────────────────────────────
-
-type ErrorResponse = {
-  success: false;
-  message: string;
-  statusCode: number;
-  errorTitle: string;
-  /** When true, a 401 may be due to an expired access token (refresh is appropriate). */
-  shouldAttemptTokenRefresh: boolean;
-};
-
-const REFRESH_BODY_CODES = new Set<string>([
-  API_AUTH_ERROR_TOKEN_EXPIRED,
-  "JWT_EXPIRED",
-  "INVALID_ACCESS_TOKEN",
-]);
-
-const normalizeErrorCode = (raw: unknown): string | null => {
-  if (typeof raw !== "string" || !raw) return null;
-  return raw.toUpperCase().replace(/-/g, "_");
-};
-
 const wwwAuthenticateSuggestsTokenRefresh = (header: string | null): boolean => {
   if (!header) return false;
   return /Bearer[^,]*error\s*=\s*"(invalid_token|expired_token)"/i.test(header) ||
     /\b(invalid_token|expired_token)\b/i.test(header);
 };
 
+/** Matches Nest `JwtGuard` + API contract: expired access JWT uses this exact phrase in `message`. */
 const messageSuggestsExpiredJwt = (message: unknown): boolean => {
   if (typeof message !== "string") return false;
   return /jwt expired|token expired|access token expired/i.test(message);
-};
-
-const bodySuggestsTokenRefresh = (data: Record<string, unknown>): boolean => {
-  const code = normalizeErrorCode(data.code ?? data.error);
-  if (code && REFRESH_BODY_CODES.has(code)) return true;
-  return messageSuggestsExpiredJwt(data.message);
 };
 
 const shouldAttemptTokenRefreshFromResponse = (
@@ -70,7 +43,7 @@ const shouldAttemptTokenRefreshFromResponse = (
   if (wwwAuthenticateSuggestsTokenRefresh(response.headers.get("WWW-Authenticate"))) {
     return true;
   }
-  return bodySuggestsTokenRefresh(data);
+  return messageSuggestsExpiredJwt(data.message);
 };
 
 const getErrorTitle = (statusCode: number): string => {
@@ -142,22 +115,16 @@ const responseHandler = async <T>(response: Response): Promise<T> => {
   const body = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
 
   if (!response.ok) {
-    const rawMsg = body.message;
+    const msg = body.message;
     const message =
-      Array.isArray(rawMsg)
-        ? rawMsg.map(String).join(", ")
-        : typeof rawMsg === "string" && rawMsg
-          ? rawMsg
-          : "An error occurred";
+      typeof msg === "string" && msg ? msg : "An error occurred";
 
-    const error: ErrorResponse = {
-      success: false,
+    throw new ApiError({
       message,
       statusCode: response.status,
       errorTitle: getErrorTitle(response.status),
       shouldAttemptTokenRefresh: shouldAttemptTokenRefreshFromResponse(response, body),
-    };
-    throw error;
+    });
   }
 
   // Unwrap NestJS envelope: { success, statusCode, data, timestamp }
@@ -228,7 +195,7 @@ class NetworkManager {
   }
 
   private canTryRefresh(
-    error: ErrorResponse,
+    error: ApiError,
     ctx: { isPublic: boolean; hadBearer: boolean; isRetry: boolean }
   ): boolean {
     if (ctx.isPublic || ctx.isRetry) return false;
@@ -244,9 +211,9 @@ class NetworkManager {
     try {
       return await execute();
     } catch (error) {
-      const apiError = error as ErrorResponse;
+      if (!(error instanceof ApiError)) throw error;
 
-      if (this.canTryRefresh(apiError, ctx)) {
+      if (this.canTryRefresh(error, ctx)) {
         if (!this.refreshPromise) {
           this.refreshPromise = this.silentRefresh().finally(() => {
             this.refreshPromise = null;

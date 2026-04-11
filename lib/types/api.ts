@@ -6,24 +6,19 @@ export type ApiResponse<T> = {
 };
 
 /**
- * Nest (or any API) should set `code` to this on 401 when the access JWT is expired
- * so the client can refresh. Generic 401s (wrong password, missing role, etc.) must omit it.
+ * 401 `message` contract with Nest `JwtGuard` + `HttpExceptionFilter` (no extra fields):
+ * - Expired access JWT: `"jwt expired"` → client may refresh and retry.
+ * - Bad/missing bearer JWT: `"invalid access token"` → do not refresh.
+ * - Wrong credentials (login): e.g. `"Invalid email or password"` → do not refresh.
  */
-export const API_AUTH_ERROR_TOKEN_EXPIRED = "TOKEN_EXPIRED" as const;
 
-export type ApiAuthErrorCode =
-  | typeof API_AUTH_ERROR_TOKEN_EXPIRED
-  | "JWT_EXPIRED"
-  | "INVALID_ACCESS_TOKEN";
-
-export type ApiError = {
+/** JSON error body from Nest `HttpExceptionFilter` (wire shape; client throws `ApiError` from `@/lib/domain/api/ApiError`). */
+export type ApiErrorBody = {
   success: false;
   statusCode: number;
   message: string;
   path: string;
   timestamp: string;
-  /** Machine-readable reason; use API_AUTH_ERROR_TOKEN_EXPIRED for expired access JWT */
-  code?: ApiAuthErrorCode | string;
 };
 
 export type UserRole = "user" | "admin";

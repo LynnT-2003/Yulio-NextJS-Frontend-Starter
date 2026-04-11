@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { User } from "../../../lib/types/api";
+import type { User } from "@/lib/types/api";
 
 function formatDate(iso: string) {
   try {
@@ -72,19 +72,11 @@ export function UserProfilePanel({ user }: { user: User }) {
         <Row
           label="Providers"
           value={
-            user.providers?.length
-              ? user.providers.join(", ")
-              : "—"
+            user.providers?.length ? user.providers.join(", ") : "—"
           }
         />
-        <Row
-          label="Created"
-          value={formatDate(user.createdAt)}
-        />
-        <Row
-          label="Updated"
-          value={formatDate(user.updatedAt)}
-        />
+        <Row label="Created" value={formatDate(user.createdAt)} />
+        <Row label="Updated" value={formatDate(user.updatedAt)} />
       </dl>
 
       {details.length > 0 ? (

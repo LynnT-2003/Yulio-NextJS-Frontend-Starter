@@ -2,21 +2,23 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { routes } from "../../lib/config/routes";
-import { useAuth } from "../../providers/auth-provider";
+import { routes } from "@/lib/config/routes";
+import { useAuth } from "@/providers/auth-provider";
 
-export function AppHeader() {
+export function Navbar() {
   const { user, ready, logout } = useAuth();
   const [loggingOut, setLoggingOut] = React.useState(false);
 
-  async function handleLogout() {
+  const onLogout = React.useCallback(() => {
     setLoggingOut(true);
-    try {
-      await logout();
-    } finally {
-      setLoggingOut(false);
-    }
-  }
+    void (async () => {
+      try {
+        await logout();
+      } finally {
+        setLoggingOut(false);
+      }
+    })();
+  }, [logout]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/90">
@@ -41,7 +43,7 @@ export function AppHeader() {
               </Link>
               <button
                 type="button"
-                onClick={() => void handleLogout()}
+                onClick={() => void onLogout()}
                 disabled={loggingOut}
                 className="rounded-lg bg-zinc-900 px-3 py-1.5 font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
               >
