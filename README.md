@@ -42,7 +42,12 @@ If that variable is **unset**, callbacks keep returning **JSON on the API host**
 Layers mirror the Nest idea: **routes** stay thin; **features** own UI; **domain** owns HTTP + session rules; **lib/domain/api** is the single HTTP transport.
 
 ```text
-app/                      # Routes only — compose feature components
+app/
+  (protected)/            # Shared RequireAuth layout — all nested routes are authenticated
+    layout.tsx
+    account/page.tsx
+  auth/…                  # OAuth callback + import (public)
+  login, register, …      # Other public routes
 components/layout/        # Shell (header, …)
 features/
   auth/
@@ -62,6 +67,8 @@ lib/
   types/                  # DTO-aligned types
 providers/                # AuthProvider / useAuth
 ```
+
+**Protected routes:** `app/(protected)/layout.tsx` wraps all nested segments in `RequireAuth`. URLs are unchanged (`(protected)` is a route group). Add e.g. `app/(protected)/settings/page.tsx` for more gated pages without repeating the guard.
 
 ### What lives where (auth)
 
@@ -106,8 +113,8 @@ New product features (payments, admin, …) add **`lib/domain/<feature>/<feature
 | `/` | Landing + CTAs |
 | `/login` | Local sign-in + OAuth links |
 | `/register` | Local registration |
-| `/account` | **Protected** — profile from `GET /api/users/me` |
-| `/logout` | API logout + clear session |
+| `/account` | **Protected** (`app/(protected)/`) — profile from `GET /api/users/me` |
+| *(no `/logout` route)* | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()` |
 | `/auth/callback` | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest |
 | `/auth/oauth-import` | Paste OAuth JSON (fallback) |
 

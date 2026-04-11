@@ -1,11 +1,22 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { routes } from "../../lib/config/routes";
 import { useAuth } from "../../providers/auth-provider";
 
 export function AppHeader() {
-  const { user, ready } = useAuth();
+  const { user, ready, logout } = useAuth();
+  const [loggingOut, setLoggingOut] = React.useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/90">
@@ -28,12 +39,14 @@ export function AppHeader() {
               >
                 Account
               </Link>
-              <Link
-                href={routes.logout}
-                className="rounded-lg bg-zinc-900 px-3 py-1.5 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={loggingOut}
+                className="rounded-lg bg-zinc-900 px-3 py-1.5 font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
               >
-                Log out
-              </Link>
+                {loggingOut ? "…" : "Log out"}
+              </button>
             </>
           ) : (
             <>
