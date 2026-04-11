@@ -6,10 +6,8 @@ export type ApiResponse<T> = {
 };
 
 /**
- * 401 `message` contract with Nest `JwtGuard` + `HttpExceptionFilter` (no extra fields):
- * - Expired access JWT: `"jwt expired"` → client may refresh and retry.
- * - Bad/missing bearer JWT: `"invalid access token"` → do not refresh.
- * - Wrong credentials (login): e.g. `"Invalid email or password"` → do not refresh.
+ * 401 `message` contract with Nest `JwtGuard` + `HttpExceptionFilter` (no extra fields).
+ * `NetworkManager` maps these for Bearer requests: see `auth-unauthorized.ts`.
  */
 
 /** JSON error body from Nest `HttpExceptionFilter` (wire shape; client throws `ApiError` from `@/lib/domain/api/ApiError`). */

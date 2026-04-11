@@ -1,7 +1,11 @@
 import NetworkConfig from "./NetworkConfig";
 import ApiStatusCodes from "./ApiStatusCodes";
-import { isAccountSuspendedMessage } from "./account-suspended";
 import { ApiError } from "./ApiError";
+import {
+  isAccountSuspendedMessage,
+  resolveUnauthorizedSessionAction,
+  UnauthorizedSessionAction,
+} from "./auth-unauthorized";
 import { tokenStore } from "./tokenStore";
 
 export type RequestOptions = RequestInit & {
@@ -29,30 +33,6 @@ let _onAccountSuspended: OnAccountSuspended = () => { };
 
 export const setAccountSuspendedHandler = (fn: OnAccountSuspended) => {
   _onAccountSuspended = fn;
-};
-
-const wwwAuthenticateSuggestsTokenRefresh = (header: string | null): boolean => {
-  if (!header) return false;
-  return /Bearer[^,]*error\s*=\s*"(invalid_token|expired_token)"/i.test(header) ||
-    /\b(invalid_token|expired_token)\b/i.test(header);
-};
-
-/** Matches Nest `JwtGuard` + API contract: expired access JWT uses this exact phrase in `message`. */
-const messageSuggestsExpiredJwt = (message: unknown): boolean => {
-  if (typeof message !== "string") return false;
-  return /jwt expired|token expired|access token expired/i.test(message);
-};
-
-const shouldAttemptTokenRefreshFromResponse = (
-  response: Response,
-  data: Record<string, unknown>
-): boolean => {
-  if (response.status !== ApiStatusCodes.UNAUTHORIZED) return false;
-  if (isAccountSuspendedMessage(data.message)) return false;
-  if (wwwAuthenticateSuggestsTokenRefresh(response.headers.get("WWW-Authenticate"))) {
-    return true;
-  }
-  return messageSuggestsExpiredJwt(data.message);
 };
 
 const getErrorTitle = (statusCode: number): string => {
@@ -136,7 +116,6 @@ const responseHandler = async <T>(response: Response): Promise<T> => {
       message,
       statusCode: response.status,
       errorTitle: getErrorTitle(response.status),
-      shouldAttemptTokenRefresh: shouldAttemptTokenRefreshFromResponse(response, body),
       isAccountSuspended: isSuspended,
     });
   }
@@ -228,16 +207,9 @@ class NetworkManager {
     }, 3000);
   }
 
-  private canTryRefresh(
-    error: ApiError,
-    ctx: { isPublic: boolean; hadBearer: boolean; isRetry: boolean }
-  ): boolean {
-    if (ctx.isPublic || ctx.isRetry) return false;
-    if (error.statusCode !== ApiStatusCodes.UNAUTHORIZED) return false;
-    if (!ctx.hadBearer) return false;
-    return error.shouldAttemptTokenRefresh;
-  }
-
+  /**
+   * 401 + Bearer on a protected call: use Nest `message` to choose suspended, hard sign-out, or one refresh+retry.
+   */
   private async runWithRefresh<T>(
     ctx: { isPublic: boolean; hadBearer: boolean; isRetry: boolean },
     execute: () => Promise<T>
@@ -247,11 +219,24 @@ class NetworkManager {
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;
 
-      if (error.isAccountSuspended && ctx.hadBearer) {
-        this.handleAccountSuspended();
-      }
+      const is401 = error.statusCode === ApiStatusCodes.UNAUTHORIZED;
+      const bearerRecover401 =
+        is401 &&
+        ctx.hadBearer &&
+        !ctx.isPublic &&
+        !ctx.isRetry;
 
-      if (this.canTryRefresh(error, ctx)) {
+      if (bearerRecover401) {
+        const action = resolveUnauthorizedSessionAction(error.message);
+        if (action === UnauthorizedSessionAction.AccountSuspended) {
+          this.handleAccountSuspended();
+          throw error;
+        }
+        if (action === UnauthorizedSessionAction.SignOut) {
+          this.handleSessionExpired();
+          throw error;
+        }
+
         if (!this.refreshPromise) {
           this.refreshPromise = this.silentRefresh().finally(() => {
             this.refreshPromise = null;
@@ -268,10 +253,11 @@ class NetworkManager {
           throw error;
         }
 
-        return this.runWithRefresh<T>(
-          { ...ctx, isRetry: true },
-          execute
-        );
+        return this.runWithRefresh<T>({ ...ctx, isRetry: true }, execute);
+      }
+
+      if (is401 && ctx.hadBearer && error.isAccountSuspended) {
+        this.handleAccountSuspended();
       }
 
       throw error;
