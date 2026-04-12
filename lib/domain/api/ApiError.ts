@@ -1,4 +1,4 @@
-import { isAccountSuspendedMessage } from "./auth-unauthorized";
+import { isAccountSuspendedMessage } from "./NetworkUnauthorizedHandler";
 
 /** Thrown by `NetworkManager` on non-OK HTTP responses (Nest body: `message` is a string). */
 export class ApiError extends Error {

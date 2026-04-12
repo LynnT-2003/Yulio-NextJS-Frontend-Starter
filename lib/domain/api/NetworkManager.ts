@@ -5,7 +5,7 @@ import {
   isAccountSuspendedMessage,
   resolveUnauthorizedSessionAction,
   UnauthorizedSessionAction,
-} from "./auth-unauthorized";
+} from "./NetworkUnauthorizedHandler";
 import { tokenStore } from "./tokenStore";
 
 export type RequestOptions = RequestInit & {
