@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2026-04-12]
 
+### Added
+
+- **Admin account moderation** (`/admin/moderation`): authenticated **`role: admin`** only; **`AdminLayoutClient`** + **`useRequireAdminVm`** redirect non-admins to **`/account`**. Table UI lists **`GET /api/admin/moderation/users`** with search, suspended filter, pagination, **suspend** (optional reason modal) and **unsuspend** (confirm), wired through **`lib/domain/admin/moderation-api.ts`**. Types **`ModerationUser`** / **`ModerationUserListResult`** in **`lib/types/api.ts`**; route constant **`routes.adminModeration`** in **`lib/config/routes.ts`**. Navbar shows **Admin** when `user.role === "admin"`.
+
 ### Changed
 
 - **`logoutRequest`**: Sends the **Bearer access token** again (not `isPublic`). **`POST /auth/logout`** is JWT-protected on the API; if the access JWT is expired, **`NetworkManager`** refreshes once and retries the logout call automatically.

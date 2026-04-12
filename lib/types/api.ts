@@ -50,3 +50,17 @@ export type AuthResponse = {
   user: User;
   tokens: AuthTokens;
 };
+
+/** Nest `IUserAdminModerationView` — admin moderation APIs only. */
+export type ModerationUser = User & {
+  isSuspended: boolean;
+  suspensionReason: string | null;
+  suspendedAt: string | null;
+};
+
+export type ModerationUserListResult = {
+  items: ModerationUser[];
+  total: number;
+  page: number;
+  limit: number;
+};

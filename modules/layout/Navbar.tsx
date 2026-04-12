@@ -38,6 +38,14 @@ export function Navbar() {
             <span className="text-zinc-400">…</span>
           ) : user ? (
             <>
+              {user.role === "admin" ? (
+                <Link
+                  href={routes.adminModeration}
+                  className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  Admin
+                </Link>
+              ) : null}
               <Link
                 href={routes.account}
                 className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
