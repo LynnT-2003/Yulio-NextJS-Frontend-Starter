@@ -5,7 +5,7 @@ export class ApiError extends Error {
   readonly success = false as const;
   readonly statusCode: number;
   readonly errorTitle: string;
-  /** Nest JWT / auth when the user account is suspended (do not refresh; clear session). */
+  /** Nest **403** (or legacy **401**) with `message: "Account suspended"` — authorization, not invalid session. */
   readonly isAccountSuspended: boolean;
 
   constructor(params: {
@@ -19,6 +19,8 @@ export class ApiError extends Error {
     this.statusCode = params.statusCode;
     this.errorTitle = params.errorTitle;
     this.isAccountSuspended =
-      params.isAccountSuspended ?? isAccountSuspendedMessage(params.message);
+      params.isAccountSuspended ??
+      (isAccountSuspendedMessage(params.message) &&
+        (params.statusCode === 401 || params.statusCode === 403));
   }
 }

@@ -16,11 +16,7 @@ import {
   type RegisterBody,
 } from "../lib/domain/auth/auth-api";
 import { getCurrentUser } from "../lib/domain/user/user-api";
-import {
-  setAccountSuspendedHandler,
-  setSessionExpiredHandler,
-} from "../lib/domain/api/NetworkManager";
-import { ApiError } from "../lib/domain/api/ApiError";
+import { setSessionExpiredHandler } from "../lib/domain/api/NetworkManager";
 import { routes } from "../lib/config/routes";
 
 export type AuthContextValue = {
@@ -65,10 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSessionExpiredHandler(() => {
       clearClientSession();
       router.replace(routes.login);
-    });
-    setAccountSuspendedHandler(() => {
-      clearClientSession();
-      router.replace(`${routes.login}?suspended=1`);
     });
   }, [router, clearClientSession]);
 
@@ -122,21 +114,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router, clearClientSession]);
 
   const refreshUser = React.useCallback(async () => {
-    try {
-      const next = await getCurrentUser();
-      setUser(next);
-      const p = readPersistedSession();
-      if (p) {
-        writePersistedSession({
-          ...p,
-          user: next,
-        });
-      }
-    } catch (e) {
-      if (e instanceof ApiError && e.isAccountSuspended) {
-        return;
-      }
-      throw e;
+    const next = await getCurrentUser();
+    setUser(next);
+    const p = readPersistedSession();
+    if (p) {
+      writePersistedSession({
+        ...p,
+        user: next,
+      });
     }
   }, []);
 

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import type { User } from "@/lib/types/api";
-import { ApiError } from "@/lib/domain/api/ApiError";
 import { useAuth } from "@/providers/auth-provider";
 
 export type AccountPageVm = {
@@ -21,7 +20,6 @@ export function useAccountPageVm(): AccountPageVm {
     setSyncError(null);
     refreshUser().catch((e: unknown) => {
       if (cancelled) return;
-      if (e instanceof ApiError && e.isAccountSuspended) return;
       setSyncError(
         e instanceof Error ? e.message : "Could not sync profile from API"
       );

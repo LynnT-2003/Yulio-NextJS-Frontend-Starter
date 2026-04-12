@@ -33,8 +33,8 @@ If that variable is **unset**, callbacks keep returning **JSON on the API host**
 
 ## Environment
 
-| Variable | Purpose |
-|----------|---------|
+| Variable                   | Purpose                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_API_BASE_URL` | API root: either `https://api.example.com` or `https://api.example.com/api` (see `lib/config/api-path.ts`). |
 
 ## Architecture
@@ -43,13 +43,13 @@ Routes stay thin. **One screen = one pair of named files:** `*PageVm.ts` (type +
 
 ### MVVM in this repo
 
-| Layer | Role |
-|--------|------|
-| **`app/**/page.tsx`** | Calls the screen’s `use…Vm()` and renders the matching `…View` with `vm={…}`. |
-| **`viewModel/*.ts` or `viewModel/<segment>/*.ts`** | Exports `FooPageVm` / `useFooPageVm()`, etc. |
-| **`view/*.tsx` or `view/<segment>/*.tsx`** | Exports `FooPageView({ vm })` — presentational. |
-| **`ProtectedLayoutClient`** | Client shell for `(protected)` layout; wires `useRequireAuthVm` + `RequireAuthView`. |
-| **`modules/layout/Navbar.tsx`** | Root shell nav (single client component; no separate view/viewModel). |
+| Layer                                              | Role                                                                                 |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **`app/**/page.tsx`\*\*                            | Calls the screen’s `use…Vm()` and renders the matching `…View` with `vm={…}`.        |
+| **`viewModel/*.ts` or `viewModel/<segment>/*.ts`** | Exports `FooPageVm` / `useFooPageVm()`, etc.                                         |
+| **`view/*.tsx` or `view/<segment>/*.tsx`**         | Exports `FooPageView({ vm })` — presentational.                                      |
+| **`ProtectedLayoutClient`**                        | Client shell for `(protected)` layout; wires `useRequireAuthVm` + `RequireAuthView`. |
+| **`modules/layout/Navbar.tsx`**                    | Root shell nav (single client component; no separate view/viewModel).                |
 
 Example (`/account` — single screen, flat under `modules/account`):
 
@@ -112,12 +112,12 @@ providers/                # AuthProvider / useAuth
 
 ### What lives where (auth)
 
-| Piece | Responsibility |
-|--------|-----------------|
-| **`auth-api.ts`** | All **HTTP** auth calls plus **OAuth start URLs** (`oauthStartUrls` / `oauthProviders`). One place to import for “anything that talks auth to the API or starts OAuth in the browser”. |
-| **`session-storage.ts`** | Serialize/deserialize the SPA session for reloads. Not HTTP — a **persistence adapter**. New screens should not add parallel keys; extend this module if the snapshot shape grows. |
-| **`modules/auth/utils/parse-oauth-json.ts`** | **Dev / fallback** only: parse pasted JSON. Not used by `NetworkManager`. |
-| **`lib/config/api-path.ts`** | How `NEXT_PUBLIC_API_BASE_URL` is joined to paths — no business logic. |
+| Piece                                        | Responsibility                                                                                                                                                                         |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`auth-api.ts`**                            | All **HTTP** auth calls plus **OAuth start URLs** (`oauthStartUrls` / `oauthProviders`). One place to import for “anything that talks auth to the API or starts OAuth in the browser”. |
+| **`session-storage.ts`**                     | Serialize/deserialize the SPA session for reloads. Not HTTP — a **persistence adapter**. New screens should not add parallel keys; extend this module if the snapshot shape grows.     |
+| **`modules/auth/utils/parse-oauth-json.ts`** | **Dev / fallback** only: parse pasted JSON. Not used by `NetworkManager`.                                                                                                              |
+| **`lib/config/api-path.ts`**                 | How `NEXT_PUBLIC_API_BASE_URL` is joined to paths — no business logic.                                                                                                                 |
 
 ### `NetworkManager` (domain API) — stable contract
 
@@ -148,15 +148,15 @@ New product areas add **`lib/domain/<feature>/<feature>-api.ts`** that **only** 
 
 ## Routes
 
-| Path | Role |
-|------|------|
-| `/` | Landing + CTAs |
-| `/login` | Local sign-in + OAuth links |
-| `/register` | Local registration |
-| `/account` | **Protected** (`app/(protected)/`) — profile from `GET /api/users/me` |
-| *(no `/logout` route)* | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()` |
-| `/auth/callback` | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest |
-| `/auth/oauth-import` | Paste OAuth JSON (fallback) |
+| Path                   | Role                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `/`                    | Landing + CTAs                                                                         |
+| `/login`               | Local sign-in + OAuth links                                                            |
+| `/register`            | Local registration                                                                     |
+| `/account`             | **Protected** (`app/(protected)/`) — profile from `GET /api/users/me`                  |
+| _(no `/logout` route)_ | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()` |
+| `/auth/callback`       | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest           |
+| `/auth/oauth-import`   | Paste OAuth JSON (fallback)                                                            |
 
 ## Alignment with Nest
 
@@ -165,8 +165,8 @@ New product areas add **`lib/domain/<feature>/<feature>-api.ts`** that **only** 
 
 ## Scripts
 
-- `npm run dev` — Next dev server  
-- `npm run build` / `npm run start` — production  
+- `npm run dev` — Next dev server
+- `npm run build` / `npm run start` — production
 
 ---
 

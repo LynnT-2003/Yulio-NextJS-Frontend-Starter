@@ -28,19 +28,14 @@ export const setSessionExpiredHandler = (fn: OnSessionExpired) => {
   _onSessionExpired = fn;
 };
 
-type OnAccountSuspended = () => void;
-let _onAccountSuspended: OnAccountSuspended = () => { };
-
-export const setAccountSuspendedHandler = (fn: OnAccountSuspended) => {
-  _onAccountSuspended = fn;
-};
-
 const getErrorTitle = (statusCode: number): string => {
   switch (statusCode) {
     case ApiStatusCodes.BAD_REQUEST:
       return "Bad Request";
     case ApiStatusCodes.UNAUTHORIZED:
       return "Unauthorized";
+    case ApiStatusCodes.FORBIDDEN:
+      return "Forbidden";
     case ApiStatusCodes.NOT_FOUND:
       return "Not Found";
     case ApiStatusCodes.CONFLICT:
@@ -109,8 +104,9 @@ const responseHandler = async <T>(response: Response): Promise<T> => {
       typeof msg === "string" && msg ? msg : "An error occurred";
 
     const isSuspended =
-      response.status === ApiStatusCodes.UNAUTHORIZED &&
-      isAccountSuspendedMessage(message);
+      isAccountSuspendedMessage(message) &&
+      (response.status === ApiStatusCodes.UNAUTHORIZED ||
+        response.status === ApiStatusCodes.FORBIDDEN);
 
     throw new ApiError({
       message,
@@ -130,8 +126,6 @@ class NetworkManager {
   private static instance: NetworkManager;
   private refreshPromise: Promise<string | null> | null = null;
   private sessionInvalidateHandled = false;
-  /** When refresh returns 401 Account suspended, skip `handleSessionExpired` (suspension already cleared the session). */
-  private refreshEndedWithAccountSuspended = false;
 
   static getInstance(): NetworkManager {
     if (!NetworkManager.instance) {
@@ -144,8 +138,6 @@ class NetworkManager {
     const refreshToken = tokenStore.getRefreshToken();
     const userId = tokenStore.getUserId();
     if (!refreshToken || !userId) return null;
-
-    this.refreshEndedWithAccountSuspended = false;
 
     try {
       const res = await fetch(NetworkConfig.shared.authRefreshUrl(), {
@@ -162,10 +154,6 @@ class NetworkManager {
           : {};
 
       if (!res.ok) {
-        if (isAccountSuspendedMessage(body.message)) {
-          this.refreshEndedWithAccountSuspended = true;
-          this.handleAccountSuspended();
-        }
         return null;
       }
 
@@ -197,18 +185,9 @@ class NetworkManager {
     }, 3000);
   }
 
-  private handleAccountSuspended(): void {
-    if (this.sessionInvalidateHandled) return;
-    this.sessionInvalidateHandled = true;
-    tokenStore.clear();
-    _onAccountSuspended();
-    setTimeout(() => {
-      this.sessionInvalidateHandled = false;
-    }, 3000);
-  }
-
   /**
-   * 401 + Bearer on a protected call: use Nest `message` to choose suspended, hard sign-out, or one refresh+retry.
+   * 401 + Bearer on a protected call: use Nest `message` to choose hard sign-out or one refresh+retry.
+   * Suspended users stay signed in; blocked routes return **403** `Account suspended` (no session clear).
    */
   private async runWithRefresh<T>(
     ctx: { isPublic: boolean; hadBearer: boolean; isRetry: boolean },
@@ -228,10 +207,6 @@ class NetworkManager {
 
       if (bearerRecover401) {
         const action = resolveUnauthorizedSessionAction(error.message);
-        if (action === UnauthorizedSessionAction.AccountSuspended) {
-          this.handleAccountSuspended();
-          throw error;
-        }
         if (action === UnauthorizedSessionAction.SignOut) {
           this.handleSessionExpired();
           throw error;
@@ -246,18 +221,11 @@ class NetworkManager {
         const newToken = await this.refreshPromise;
 
         if (!newToken) {
-          if (!this.refreshEndedWithAccountSuspended) {
-            this.handleSessionExpired();
-          }
-          this.refreshEndedWithAccountSuspended = false;
+          this.handleSessionExpired();
           throw error;
         }
 
         return this.runWithRefresh<T>({ ...ctx, isRetry: true }, execute);
-      }
-
-      if (is401 && ctx.hadBearer && error.isAccountSuspended) {
-        this.handleAccountSuspended();
       }
 
       throw error;

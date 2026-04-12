@@ -7,12 +7,12 @@ const norm = (message: string) => message.trim().toLowerCase();
 
 /** Known 401 `message` values from the backend (keep in sync with Nest). */
 export const UnauthorizedWireMessage = {
+  /** Also returned as **403** on protected routes when the user is suspended (authorization). */
   accountSuspended: "Account suspended",
   userNoLongerExists: "User no longer exists",
 } as const;
 
 export enum UnauthorizedSessionAction {
-  AccountSuspended = "account_suspended",
   SignOut = "sign_out",
   TryRefresh = "try_refresh",
 }
@@ -28,7 +28,6 @@ export function isAccountSuspendedMessage(message: unknown): boolean {
 export function resolveUnauthorizedSessionAction(
   message: string
 ): UnauthorizedSessionAction {
-  if (isAccountSuspendedMessage(message)) return UnauthorizedSessionAction.AccountSuspended;
   if (norm(message) === norm(UnauthorizedWireMessage.userNoLongerExists)) {
     return UnauthorizedSessionAction.SignOut;
   }

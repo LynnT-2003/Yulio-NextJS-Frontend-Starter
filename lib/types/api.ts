@@ -37,6 +37,9 @@ export type User = {
   providers: string[];
   /** Present on Nest `UserPublicDto`; optional for older cached sessions. */
   providerDetails?: UserProviderDetail[];
+  isSuspended: boolean;
+  suspensionReason: string | null;
+  suspendedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -51,12 +54,8 @@ export type AuthResponse = {
   tokens: AuthTokens;
 };
 
-/** Nest `IUserAdminModerationView` — admin moderation APIs only. */
-export type ModerationUser = User & {
-  isSuspended: boolean;
-  suspensionReason: string | null;
-  suspendedAt: string | null;
-};
+/** Same as {@link User} — moderation list returns full public profile. */
+export type ModerationUser = User;
 
 export type ModerationUserListResult = {
   items: ModerationUser[];

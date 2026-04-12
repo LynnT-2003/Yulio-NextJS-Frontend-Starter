@@ -9,19 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Admin account moderation** (`/admin/moderation`): authenticated **`role: admin`** only; **`AdminLayoutClient`** + **`useRequireAdminVm`** redirect non-admins to **`/account`**. Table UI lists **`GET /api/admin/moderation/users`** with search, suspended filter, pagination, **suspend** (optional reason modal) and **unsuspend** (confirm), wired through **`lib/domain/admin/moderation-api.ts`**. Types **`ModerationUser`** / **`ModerationUserListResult`** in **`lib/types/api.ts`**; route constant **`routes.adminModeration`** in **`lib/config/routes.ts`**. Navbar shows **Admin** when `user.role === "admin"`.
+- **Admin account moderation** (`/admin/moderation`): authenticated **`role: admin`**, not suspended; **`AdminLayoutClient`** + **`useRequireAdminVm`** redirect others to **`/account`**. Table UI lists **`GET /api/admin/moderation/users`** with search, suspended filter, pagination, **suspend** (optional reason modal) and **unsuspend** (confirm), wired through **`lib/domain/admin/moderation-api.ts`**. Types **`ModerationUser`** / **`ModerationUserListResult`** in **`lib/types/api.ts`**; route constant **`routes.adminModeration`** in **`lib/config/routes.ts`**. Navbar shows **Admin** when `user.role === "admin"` and **`!user.isSuspended`**.
+- **`AccountSuspendedBanner`** on protected routes; **`User`** includes **`isSuspended`**, **`suspensionReason`**, **`suspendedAt`** (aligned with Nest **`IUserPublic`**). Persisted session read path normalizes missing suspension fields for older localStorage payloads.
 
 ### Changed
 
+- **Suspended accounts (pair with Nest [2026-04-12])**: login/OAuth/refresh succeed; blocked API calls return **`403`** + **`Account suspended`** by default. **`ApiError.isAccountSuspended`** is set for **401** or **403** with that message; the client **no longer** clears the session or redirects via **`setAccountSuspendedHandler`** (removed). **`NetworkManager`** treats suspension as a normal authorization failure after token refresh logic.
 - **`logoutRequest`**: Sends the **Bearer access token** again (not `isPublic`). **`POST /auth/logout`** is JWT-protected on the API; if the access JWT is expired, **`NetworkManager`** refreshes once and retries the logout call automatically.
+- **`useRequireAdminVm`** / Navbar: suspended users are not treated as admins in the UI (**`/admin`** hidden; redirect from admin layout). **`ApiStatusCodes.FORBIDDEN`** (**403**) title mapping added.
 
 ## [2026-04-11]
 
 ### Added
 
-- **Suspended accounts** (Nest `401` + `message: "Account suspended"`): `ApiError.isAccountSuspended`, `lib/domain/api/account-suspended.ts`, and `NetworkManager` behavior — no token refresh for that message; clears the session via **`setAccountSuspendedHandler`** and redirects to **`/login?suspended=1`** (session expiry still uses **`setSessionExpiredHandler`** → `/login`).
-- **Login page**: `Suspense` + `useSearchParams` show an amber notice when `?suspended=1`.
-- **`AuthProvider`**: registers both handlers (clears `tokenStore` + persisted session + `user`); **`refreshUser`** swallows suspended errors after the network layer clears the session.
+- **Login page**: `Suspense` + `useSearchParams` show an amber notice when `?suspended=1` (optional deep link; primary suspended UX is in-app per **[2026-04-12]**).
 
 ### Fixed
 

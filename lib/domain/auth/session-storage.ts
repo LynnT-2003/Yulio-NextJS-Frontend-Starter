@@ -24,7 +24,16 @@ export function readPersistedSession(): PersistedSession | null {
     ) {
       return null;
     }
-    return parsed;
+    const u = parsed.user;
+    return {
+      ...parsed,
+      user: {
+        ...u,
+        isSuspended: !!u.isSuspended,
+        suspensionReason: u.suspensionReason ?? null,
+        suspendedAt: u.suspendedAt ?? null,
+      },
+    };
   } catch {
     return null;
   }

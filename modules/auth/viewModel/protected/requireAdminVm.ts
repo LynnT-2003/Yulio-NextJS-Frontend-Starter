@@ -15,11 +15,17 @@ export function useRequireAdminVm(): RequireAdminVm {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (ready && user && user.role !== "admin") {
+    if (!ready || !user) return;
+    if (user.role !== "admin" || user.isSuspended) {
       router.replace(routes.account);
     }
   }, [ready, user, router]);
 
-  const allowed = !!(ready && user && user.role === "admin");
+  const allowed = !!(
+    ready &&
+    user &&
+    user.role === "admin" &&
+    !user.isSuspended
+  );
   return { ready, allowed };
 }
