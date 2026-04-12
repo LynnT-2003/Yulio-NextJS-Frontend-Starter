@@ -2,6 +2,16 @@
 
 SPA-style **App Router** client for the Nest **OneForAll** API ([product](https://yuliolabs.com/one-for-all)): same response envelope, JWT access + refresh rotation, and all OAuth entrypoints your backend exposes. **No BFF** — the browser talks to the API directly (CORS + public auth routes).
 
+## Table of contents
+
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Architecture](#architecture)
+- [Account management & suspended users](#account-management--suspended-users)
+- [Routes](#routes)
+- [API alignment with Nest](#api-alignment-with-nest)
+- [Scripts](#scripts)
+
 ## Quick start
 
 ```bash
@@ -13,7 +23,15 @@ npm run dev
 
 Ensure the API’s `ALLOWED_ORIGINS` includes this app’s origin (e.g. `http://localhost:3000`).
 
-### OAuth back to this app (LINE, Google, …)
+## Configuration
+
+### Environment variables
+
+| Variable                   | Purpose                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL` | API root: either `https://api.example.com` or `https://api.example.com/api` (see `lib/config/api-path.ts`). |
+
+### OAuth callback (redirect back to this app)
 
 On the **Nest** deployment set:
 
@@ -30,12 +48,6 @@ Example local dev:
 Then completing LINE (or any provider) **redirects** to your Next app and lands on **Account** after `/auth/callback` runs in the browser.
 
 If that variable is **unset**, callbacks keep returning **JSON on the API host** (good for mobile / non-browser clients). Use **`/auth/oauth-import`** to paste that JSON when testing without the redirect.
-
-## Environment
-
-| Variable                   | Purpose                                                                                                     |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL` | API root: either `https://api.example.com` or `https://api.example.com/api` (see `lib/config/api-path.ts`). |
 
 ## Architecture
 
@@ -70,6 +82,8 @@ export default function AccountPage() {
 app/
   (protected)/layout.tsx   # → ProtectedLayoutClient
   (protected)/account/page.tsx
+  (protected)/admin/layout.tsx
+  (protected)/admin/moderation/page.tsx
   auth/callback, auth/oauth-import, login, register, …
 modules/
   account/
@@ -86,14 +100,21 @@ modules/
     viewModel/oauth-import/oauthImportVm.ts
     view/oauth-import/OAuthImportView.tsx
     viewModel/protected/requireAuthVm.ts
+    viewModel/protected/requireAdminVm.ts
     view/protected/RequireAuthView.tsx
+    view/protected/RequireAdminView.tsx
     utils/parse-oauth-json.ts
     ProtectedLayoutClient.tsx
+    AdminLayoutClient.tsx
   home/
     viewModel/homePageVm.ts
     view/HomePageView.tsx
   layout/
     Navbar.tsx
+    AccountSuspendedBanner.tsx
+  admin/moderation/
+    viewModel/moderationPageVm.ts
+    view/ModerationPageView.tsx
 components/ui/
 lib/
   config/                 # `routes`, `apiPath` / `apiAbsoluteUrl`
@@ -146,6 +167,32 @@ New product areas add **`lib/domain/<feature>/<feature>-api.ts`** that **only** 
 - **Persistence**: `localStorage` (`session-storage.ts`) — tokens + user snapshot.
 - **Logout**: `POST /api/auth/logout`, then clear both.
 
+## Admin User Management & Account Suspension
+
+This app follows the Nest template’s **auth vs authorization** model: suspended users **remain signed in**; the API blocks most actions with **`403 Forbidden`** and `message: "Account suspended"` unless the backend marks the route with **`@AllowSuspendedUser()`**.
+
+### Types & session
+
+- **`User`** in `lib/types/api.ts` includes **`isSuspended`**, **`suspensionReason`**, **`suspendedAt`** (aligned with **`IUserPublic`**). Login / OAuth / `GET /users/me` populate these fields.
+- **`readPersistedSession()`** normalizes older `localStorage` payloads that omit suspension fields.
+
+### HTTP layer
+
+- **`ApiError.isAccountSuspended`** is set when **`message`** matches **`account suspended`** (case-insensitive) **and** **`statusCode`** is **401** or **403**. This does **not** clear the session (unlike generic session expiry).
+- **`NetworkManager`** still refreshes on recoverable **401**s; **403** suspension responses are surfaced to the caller without signing the user out.
+
+Keep **`lib/domain/api/NetworkUnauthorizedHandler.ts`** in sync with the Nest string if you change the API.
+
+### UI behavior
+
+- **`AccountSuspendedBanner`** (`modules/layout/AccountSuspendedBanner.tsx`) renders on **`(protected)`** routes via **`ProtectedLayoutClient`** when **`user.isSuspended`** (reason + support copy when present).
+- **Admin** link and **`/admin/moderation`** access require **`role === "admin"`** and **`!user.isSuspended`** (`Navbar`, **`useRequireAdminVm`**).
+- Optional **`/login?suspended=1`** notice remains for deep links; primary UX is the in-app banner.
+
+### Pair with the API
+
+Moderation endpoints, **`SuspendedUserBlockGuard`**, and the **`@AllowSuspendedUser()`** allowlist are documented in the **Nest template README** under **Account management & suspension** (same anchor id: `#account-management--suspension` when hosted on GitHub).
+
 ## Routes
 
 | Path                   | Role                                                                                   |
@@ -153,12 +200,13 @@ New product areas add **`lib/domain/<feature>/<feature>-api.ts`** that **only** 
 | `/`                    | Landing + CTAs                                                                         |
 | `/login`               | Local sign-in + OAuth links                                                            |
 | `/register`            | Local registration                                                                     |
-| `/account`             | **Protected** (`app/(protected)/`) — profile from `GET /api/users/me`                  |
+| `/account`             | **Protected** — profile from `GET /api/users/me` (works for suspended users)           |
+| `/admin/moderation`    | **Protected** — admin moderation UI (`role: admin`, not suspended)                     |
 | _(no `/logout` route)_ | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()` |
 | `/auth/callback`       | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest           |
 | `/auth/oauth-import`   | Paste OAuth JSON (fallback)                                                            |
 
-## Alignment with Nest
+## API alignment with Nest
 
 - Global prefix `api`, `TransformInterceptor` success shape, `HttpExceptionFilter` errors.
 - Types in `lib/types/api.ts` follow `UserPublicDto` / `AuthResponse`.
