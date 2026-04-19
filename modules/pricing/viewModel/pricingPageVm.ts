@@ -35,6 +35,17 @@ export function usePricingPageVm(): PricingPageVm {
     return () => { cancelled = true; };
   }, []);
 
+  React.useEffect(() => {
+    setRedirecting(false);
+  }, []);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "cancelled") {
+      setRedirecting(false);
+    }
+  }, []);
+
   const handleCheckout = React.useCallback(async (priceId: string) => {
     setError(null);
     setRedirecting(true);
@@ -43,7 +54,7 @@ export function usePricingPageVm(): PricingPageVm {
       const { url } = await createCheckoutSession({
         priceId,
         successUrl: `${origin}${routes.account}?payment=success`,
-        cancelUrl: `${origin}${routes.pricing}`,
+        cancelUrl: `${origin}${routes.pricing}?checkout=cancelled`,
       });
       window.location.href = url;
     } catch (e: unknown) {
