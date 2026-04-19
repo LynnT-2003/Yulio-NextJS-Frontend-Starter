@@ -131,6 +131,12 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
           </>
         )}
         <Link
+          href={routes.pricing}
+          className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
+        >
+          View plans
+        </Link>
+        <Link
           href={routes.oauthImport}
           className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
         >

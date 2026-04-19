@@ -54,6 +54,23 @@ export type AuthResponse = {
   tokens: AuthTokens;
 };
 
+export type PaymentPlanId = "free" | "pro" | "lifetime";
+
+export interface UserPlan {
+  stripeCustomerId: string | null;
+  plan: PaymentPlanId;
+  planExpiresAt: string | null;
+}
+
+export interface CheckoutSession {
+  url: string;
+  sessionId: string;
+}
+
+export interface BillingPortalSession {
+  url: string;
+}
+
 /** Same as {@link User} — moderation list returns full public profile. */
 export type ModerationUser = User;
 

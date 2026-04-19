@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026-04-19]
+
+### Added
+
+- **Payment & subscription flow**: Stripe-backed plan management via three new backend endpoints (`GET /payment/plan`, `POST /payment/checkout`, `POST /payment/billing-portal`). Domain layer in **`lib/domain/payment/paymentApi.ts`** (`getUserPlan`, `createCheckoutSession`, `createBillingPortalSession`, `PRICE_IDS`). Types `PaymentPlanId`, `UserPlan`, `CheckoutSession`, `BillingPortalSession` added to **`lib/types/api.ts`**.
+- **`/pricing` page** (`app/(protected)/pricing`): three-column plan cards (Free / Pro $19/mo / Lifetime $299) with active-plan highlight, correct per-state button logic (subscribe → Stripe checkout, manage → billing portal, active → disabled), and inline error display. MVVM: `pricingPageVm.ts` + `PricingPageView.tsx`.
+- **Plan card on `/account`**: **`modules/account/components/PlanCard.tsx`** shows current plan, renewal date or "Lifetime access", and a "Manage billing →" button (hidden for free users). Polls `GET /payment/plan` every 2 s (up to 10 s) when returning from Stripe via `?payment=success`.
+- **`/pro-demo` page** (`app/(protected)/pro-demo`): investor-demo gated page — blurred content + upgrade CTA for free users; full content for pro/lifetime. MVVM: `proDemoPageVm.ts` + `ProDemoPageView.tsx`.
+- **Navbar "Plan" link**: visible to all authenticated users, links to `/pricing`.
+- **Homepage "View plans" CTA**: secondary button in the hero alongside Sign in / Register.
+- Route constants `routes.pricing` and `routes.proDemo` added to **`lib/config/routes.ts`**.
+
 ## [2026-04-12]
 
 ### Added

@@ -8,6 +8,7 @@ SPA-style **App Router** client for the Nest **OneForAll** API ([product](https:
 - [Configuration](#configuration)
 - [Architecture](#architecture)
 - [Account management & suspended users](#account-management--suspended-users)
+- [Payment & subscriptions](#payment--subscriptions)
 - [Routes](#routes)
 - [API alignment with Nest](#api-alignment-with-nest)
 - [Scripts](#scripts)
@@ -115,6 +116,12 @@ modules/
   admin/moderation/
     viewModel/moderationPageVm.ts
     view/ModerationPageView.tsx
+  pricing/
+    viewModel/pricingPageVm.ts
+    view/PricingPageView.tsx
+  pro-demo/
+    viewModel/proDemoPageVm.ts
+    view/ProDemoPageView.tsx
 components/ui/
 lib/
   config/                 # `routes`, `apiPath` / `apiAbsoluteUrl`
@@ -125,6 +132,8 @@ lib/
       session-storage.ts  # localStorage adapter for the SPA session snapshot
     user/
       user-api.ts         # e.g. GET /users/me
+    payment/
+      paymentApi.ts       # getUserPlan, createCheckoutSession, createBillingPortalSession
   types/                  # DTO-aligned types
 providers/                # AuthProvider / useAuth
 ```
@@ -193,6 +202,45 @@ Keep **`lib/domain/api/NetworkUnauthorizedHandler.ts`** in sync with the Nest st
 
 Moderation endpoints, **`SuspendedUserBlockGuard`**, and the **`@AllowSuspendedUser()`** allowlist are documented in the **Nest template README** under **Account management & suspension** (same anchor id: `#account-management--suspension` when hosted on GitHub).
 
+## Payment & subscriptions
+
+Stripe is handled entirely server-side on the Nest API. The frontend never touches Stripe directly — it calls three endpoints and redirects the browser to Stripe-hosted pages.
+
+### Plan states
+
+| `plan` | `planExpiresAt` | Meaning |
+|--------|-----------------|---------|
+| `free` | `null` | No active subscription |
+| `pro` | future date | Active monthly subscription |
+| `pro` | past date | Lapsed — subscription expired |
+| `lifetime` | `null` | One-time purchase, never expires |
+
+### Domain layer
+
+**`lib/domain/payment/paymentApi.ts`** exports:
+
+| Export | Calls |
+|--------|-------|
+| `getUserPlan()` | `GET /api/payment/plan` |
+| `createCheckoutSession(body)` | `POST /api/payment/checkout` |
+| `createBillingPortalSession(returnUrl)` | `POST /api/payment/billing-portal` |
+| `PRICE_IDS.pro` / `PRICE_IDS.lifetime` | Stripe price ID constants |
+
+### Pages
+
+- **`/pricing`** — plan selection; active plan highlighted; buttons adapt to current state (subscribe / manage / active).
+- **`/account`** — `PlanCard` component shows plan, renewal date, and "Manage billing →" (hidden for free). Polls `GET /payment/plan` every 2 s (up to 10 s) after Stripe redirects back via `?payment=success`.
+- **`/pro-demo`** — gated demo page: blurred content + upgrade CTA for free users; full content for pro/lifetime.
+
+### Post-payment flow
+
+1. User clicks **Subscribe** or **Buy once** on `/pricing`.
+2. Frontend calls `POST /payment/checkout` → receives `{ url }` → redirects browser to `url`.
+3. User pays on Stripe's hosted page; Stripe redirects to `/account?payment=success`.
+4. `PlanCard` detects the query param and polls `GET /payment/plan` until the webhook fires and the plan updates.
+
+Test cards (Stripe test mode): `4242 4242 4242 4242` succeeds, `4000 0000 0000 0002` declines, `4000 0025 0000 3155` triggers 3D Secure. Any future expiry and any 3-digit CVC.
+
 ## Routes
 
 | Path                   | Role                                                                                   |
@@ -200,7 +248,9 @@ Moderation endpoints, **`SuspendedUserBlockGuard`**, and the **`@AllowSuspendedU
 | `/`                    | Landing + CTAs                                                                         |
 | `/login`               | Local sign-in + OAuth links                                                            |
 | `/register`            | Local registration                                                                     |
-| `/account`             | **Protected** — profile from `GET /api/users/me` (works for suspended users)           |
+| `/pricing`             | **Protected** — plan selection and Stripe checkout                                     |
+| `/account`             | **Protected** — profile from `GET /api/users/me` + plan card (works for suspended users) |
+| `/pro-demo`            | **Protected** — gated demo page (free users see blur + upgrade CTA)                   |
 | `/admin/moderation`    | **Protected** — admin moderation UI (`role: admin`, not suspended)                     |
 | _(no `/logout` route)_ | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()` |
 | `/auth/callback`       | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest           |
