@@ -10,10 +10,12 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { routes } from "@/lib/config/routes";
 import type { HomePageVm } from "@/modules/home/viewModel/homePageVm";
+import { ProDemoPageView } from "@/modules/pro-demo/view/ProDemoPageView";
+import { useProDemoPageVm } from "@/modules/pro-demo/viewModel/proDemoPageVm";
 
 const LINKS = {
   yulio: "https://yuliolabs.com",
-  product: "https://yuliolabs.com/one-for-all",
+  product: "https://yuliolabs.com",
   frontend:
     "https://github.com/LynnT-2003/Yulio-NextJS-Frontend-Starter",
   backend:
@@ -91,6 +93,7 @@ function ResourceCard({
 
 export function HomePageView({ vm }: { vm: HomePageVm }) {
   const { user, ready } = vm;
+  const proDemoVm = useProDemoPageVm();
 
   return (
     <section className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-20 sm:px-4">
@@ -100,11 +103,6 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
       <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">
         Next.js Frontend Starter Kit
       </h1>
-      <p className="text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
-        1st Release: End-to-end clean frontend architecture for secure and scalable production applications. Authentication via six login
-        providers. Structured by domain to Scale.
-      </p>
-
 
       <div className="flex flex-wrap gap-3">
         {!ready ? null : user ? (
@@ -130,12 +128,12 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
             </Link>
           </>
         )}
-        <Link
+        {/* <Link
           href={routes.pricing}
           className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
         >
           View plans
-        </Link>
+        </Link> */}
         <Link
           href={routes.oauthImport}
           className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
@@ -144,6 +142,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
         </Link>
       </div>
 
+      <ProDemoPageView vm={proDemoVm} embedded />
 
       <div className="flex flex-col gap-4">
 

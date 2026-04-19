@@ -65,17 +65,28 @@ function ProContent() {
   );
 }
 
-export function ProDemoPageView({ vm }: { vm: ProDemoPageVm }) {
+export function ProDemoPageView({
+  vm,
+  embedded = false,
+}: {
+  vm: ProDemoPageVm;
+  embedded?: boolean;
+}) {
+  const Title = embedded ? "h2" : "h1";
+  const shellClass = embedded
+    ? "flex w-full flex-col gap-6"
+    : "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6";
+
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+    <div className={shellClass}>
+      {/* <div>
+        <Title className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           Pro Demo
-        </h1>
+        </Title>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           A gated page demonstrating plan-based access control.
         </p>
-      </div>
+      </div> */}
 
       {vm.loading ? (
         <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-center text-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900">

@@ -1,6 +1,6 @@
 # OneForAll — Next.js frontend (auth client)
 
-SPA-style **App Router** client for the Nest **OneForAll** API ([product](https://yuliolabs.com/one-for-all)): same response envelope, JWT access + refresh rotation, and all OAuth entrypoints your backend exposes. **No BFF** — the browser talks to the API directly (CORS + public auth routes).
+SPA-style **App Router** client for the Nest **OneForAll** API ([product](https://yuliolabs.com)): same response envelope, JWT access + refresh rotation, and all OAuth entrypoints your backend exposes. **No BFF** — the browser talks to the API directly (CORS + public auth routes).
 
 ## Table of contents
 
@@ -208,23 +208,23 @@ Stripe is handled entirely server-side on the Nest API. The frontend never touch
 
 ### Plan states
 
-| `plan` | `planExpiresAt` | Meaning |
-|--------|-----------------|---------|
-| `free` | `null` | No active subscription |
-| `pro` | future date | Active monthly subscription |
-| `pro` | past date | Lapsed — subscription expired |
-| `lifetime` | `null` | One-time purchase, never expires |
+| `plan`     | `planExpiresAt` | Meaning                          |
+| ---------- | --------------- | -------------------------------- |
+| `free`     | `null`          | No active subscription           |
+| `pro`      | future date     | Active monthly subscription      |
+| `pro`      | past date       | Lapsed — subscription expired    |
+| `lifetime` | `null`          | One-time purchase, never expires |
 
 ### Domain layer
 
 **`lib/domain/payment/paymentApi.ts`** exports:
 
-| Export | Calls |
-|--------|-------|
-| `getUserPlan()` | `GET /api/payment/plan` |
-| `createCheckoutSession(body)` | `POST /api/payment/checkout` |
+| Export                                  | Calls                              |
+| --------------------------------------- | ---------------------------------- |
+| `getUserPlan()`                         | `GET /api/payment/plan`            |
+| `createCheckoutSession(body)`           | `POST /api/payment/checkout`       |
 | `createBillingPortalSession(returnUrl)` | `POST /api/payment/billing-portal` |
-| `PRICE_IDS.pro` / `PRICE_IDS.lifetime` | Stripe price ID constants |
+| `PRICE_IDS.pro` / `PRICE_IDS.lifetime`  | Stripe price ID constants          |
 
 ### Pages
 
@@ -243,18 +243,18 @@ Test cards (Stripe test mode): `4242 4242 4242 4242` succeeds, `4000 0000 0000 0
 
 ## Routes
 
-| Path                   | Role                                                                                   |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| `/`                    | Landing + CTAs                                                                         |
-| `/login`               | Local sign-in + OAuth links                                                            |
-| `/register`            | Local registration                                                                     |
-| `/pricing`             | **Protected** — plan selection and Stripe checkout                                     |
+| Path                   | Role                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `/`                    | Landing + CTAs                                                                           |
+| `/login`               | Local sign-in + OAuth links                                                              |
+| `/register`            | Local registration                                                                       |
+| `/pricing`             | **Protected** — plan selection and Stripe checkout                                       |
 | `/account`             | **Protected** — profile from `GET /api/users/me` + plan card (works for suspended users) |
-| `/pro-demo`            | **Protected** — gated demo page (free users see blur + upgrade CTA)                   |
-| `/admin/moderation`    | **Protected** — admin moderation UI (`role: admin`, not suspended)                     |
-| _(no `/logout` route)_ | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()` |
-| `/auth/callback`       | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest           |
-| `/auth/oauth-import`   | Paste OAuth JSON (fallback)                                                            |
+| `/pro-demo`            | **Protected** — gated demo page (free users see blur + upgrade CTA)                      |
+| `/admin/moderation`    | **Protected** — admin moderation UI (`role: admin`, not suspended)                       |
+| _(no `/logout` route)_ | Use **Log out** in the header — calls `POST /api/auth/logout` via `useAuth().logout()`   |
+| `/auth/callback`       | OAuth return (hash tokens) when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest             |
+| `/auth/oauth-import`   | Paste OAuth JSON (fallback)                                                              |
 
 ## API alignment with Nest
 
