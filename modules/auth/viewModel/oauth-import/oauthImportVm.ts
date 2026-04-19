@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { routes } from "@/lib/config/routes";
 import { useAuth } from "@/providers/auth-provider";
 import { parseAuthResponseFromPastedJson } from "@/modules/auth/utils/parse-oauth-json";
 
@@ -26,7 +25,7 @@ export function useOAuthImportVm(): OAuthImportVm {
       try {
         const auth = parseAuthResponseFromPastedJson(text);
         applyAuthResponse(auth);
-        router.push(routes.account);
+        router.push("/account");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Invalid JSON");
       }

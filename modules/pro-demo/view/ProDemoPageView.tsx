@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { routes } from "@/lib/config/routes";
 import type { ProDemoPageVm } from "@/modules/pro-demo/viewModel/proDemoPageVm";
 
 function GatedContent() {
@@ -23,7 +22,7 @@ function GatedContent() {
           Upgrade to Pro to unlock this content
         </p>
         <Button asChild>
-          <Link href={routes.pricing}>View plans →</Link>
+          <Link href="/pricing">View plans →</Link>
         </Button>
       </div>
     </div>

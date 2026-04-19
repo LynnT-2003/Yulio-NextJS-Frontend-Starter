@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { routes } from "@/lib/config/routes";
 import { useAuth } from "@/providers/auth-provider";
 
 export type RequireAdminVm = {
@@ -17,7 +16,7 @@ export function useRequireAdminVm(): RequireAdminVm {
   React.useEffect(() => {
     if (!ready || !user) return;
     if (user.role !== "admin" || user.isSuspended) {
-      router.replace(routes.account);
+      router.replace("/account");
     }
   }, [ready, user, router]);
 

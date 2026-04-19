@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { tokenStore } from "@/lib/domain/api/tokenStore";
 import { getCurrentUser } from "@/lib/domain/user/user-api";
-import { routes } from "@/lib/config/routes";
 import { useAuth } from "@/providers/auth-provider";
 
 export type OAuthCallbackVm = {
@@ -46,8 +45,8 @@ export function useOAuthCallbackVm(): OAuthCallbackVm {
         const user = await getCurrentUser();
         if (cancelled) return;
         applyAuthResponse({ user, tokens: { accessToken, refreshToken } });
-        window.history.replaceState(null, "", routes.oauthCallback);
-        router.replace(routes.account);
+        window.history.replaceState(null, "", "/auth/callback");
+        router.replace("/account");
       } catch (e: unknown) {
         if (cancelled) return;
         tokenStore.clear();

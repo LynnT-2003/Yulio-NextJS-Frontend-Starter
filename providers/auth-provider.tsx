@@ -17,7 +17,6 @@ import {
 } from "../lib/domain/auth/auth-api";
 import { getCurrentUser } from "../lib/domain/user/user-api";
 import { setSessionExpiredHandler } from "../lib/domain/api/NetworkManager";
-import { routes } from "../lib/config/routes";
 
 export type AuthContextValue = {
   user: User | null;
@@ -60,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     setSessionExpiredHandler(() => {
       clearClientSession();
-      router.replace(routes.login);
+      router.replace("/login");
     });
   }, [router, clearClientSession]);
 
@@ -84,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string) => {
       const auth = await loginRequest({ email, password });
       applyAuthResponse(auth);
-      router.push(routes.account);
+      router.push("/account");
     },
     [applyAuthResponse, router]
   );
@@ -93,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (body: RegisterBody) => {
       const auth = await registerRequest(body);
       applyAuthResponse(auth);
-      router.push(routes.account);
+      router.push("/account");
     },
     [applyAuthResponse, router]
   );
@@ -110,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     clearClientSession();
-    router.push(routes.home);
+    router.push("/");
   }, [router, clearClientSession]);
 
   const refreshUser = React.useCallback(async () => {

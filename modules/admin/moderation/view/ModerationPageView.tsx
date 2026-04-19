@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { routes } from "@/lib/config/routes";
 import type { ModerationPageVm } from "@/modules/admin/moderation/viewModel/moderationPageVm";
 import type { ModerationUser } from "@/lib/types/api";
 
@@ -44,7 +43,7 @@ export function ModerationPageView({ vm }: { vm: ModerationPageVm }) {
           </p>
         </div>
         <Link
-          href={routes.account}
+          href="/account"
           className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
         >
           ← Back to account

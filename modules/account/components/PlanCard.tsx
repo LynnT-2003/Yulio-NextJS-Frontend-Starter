@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { routes } from "@/lib/config/routes";
 import {
   getUserPlan,
   createBillingPortalSession,
@@ -84,7 +83,7 @@ export function PlanCard() {
     setRedirecting(true);
     try {
       const origin = window.location.origin;
-      const { url } = await createBillingPortalSession(`${origin}${routes.account}`);
+      const { url } = await createBillingPortalSession(`${origin}/account`);
       window.location.href = url;
     } catch (e: unknown) {
       setRedirecting(false);

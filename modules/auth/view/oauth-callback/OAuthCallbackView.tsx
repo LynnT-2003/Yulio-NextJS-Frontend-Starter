@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { routes } from "@/lib/config/routes";
 import type { OAuthCallbackVm } from "@/modules/auth/viewModel/oauth-callback/oauthCallbackVm";
 
 export function OAuthCallbackView({ vm }: { vm: OAuthCallbackVm }) {
@@ -11,13 +10,13 @@ export function OAuthCallbackView({ vm }: { vm: OAuthCallbackVm }) {
         <p className="text-sm text-red-800 dark:text-red-200">{vm.error}</p>
         <div className="flex flex-wrap justify-center gap-3 text-sm">
           <Link
-            href={routes.login}
+            href="/login"
             className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
           >
             Back to login
           </Link>
           <Link
-            href={routes.oauthImport}
+            href="/auth/oauth-import"
             className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
           >
             Paste JSON instead

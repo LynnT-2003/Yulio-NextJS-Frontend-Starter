@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { routes } from "@/lib/config/routes";
 import type { HomePageVm } from "@/modules/home/viewModel/homePageVm";
 import { ProDemoPageView } from "@/modules/pro-demo/view/ProDemoPageView";
 import { useProDemoPageVm } from "@/modules/pro-demo/viewModel/proDemoPageVm";
@@ -107,7 +106,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
       <div className="flex flex-wrap gap-3">
         {!ready ? null : user ? (
           <Link
-            href={routes.account}
+            href="/account"
             className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             View your profile
@@ -115,13 +114,13 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
         ) : (
           <>
             <Link
-              href={routes.login}
+              href="/login"
               className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               Sign in
             </Link>
             <Link
-              href={routes.register}
+              href="/register"
               className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
             >
               Register
@@ -129,13 +128,13 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
           </>
         )}
         {/* <Link
-          href={routes.pricing}
+          href="/pricing"
           className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
         >
           View plans
         </Link> */}
         <Link
-          href={routes.oauthImport}
+          href="/auth/oauth-import"
           className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900/50"
         >
           OAuth JSON import

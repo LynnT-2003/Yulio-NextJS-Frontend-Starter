@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { routes } from "@/lib/config/routes";
 import type { LoginPageVm } from "@/modules/auth/viewModel/login/loginPageVm";
 
 export function LoginPageView({
@@ -87,7 +86,7 @@ export function LoginPageView({
         <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
           No account?{" "}
           <Link
-            href={routes.register}
+            href="/register"
             className="font-medium text-zinc-900 underline-offset-4 hover:underline dark:text-zinc-100"
           >
             Register
@@ -112,7 +111,7 @@ export function LoginPageView({
             URL, you return here signed in. Otherwise you&apos;ll see JSON on the API —
             use{" "}
             <Link
-              href={routes.oauthImport}
+              href="/auth/oauth-import"
               className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
             >
               OAuth import
@@ -140,7 +139,7 @@ export function LoginPageView({
       <p className="max-w-md text-center text-xs text-zinc-500 dark:text-zinc-400">
         Add your Next origin to <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">ALLOWED_ORIGINS</code>{" "}
         on the API. See{" "}
-        <Link href={routes.oauthImport} className="underline-offset-2 hover:underline">
+        <Link href="/auth/oauth-import" className="underline-offset-2 hover:underline">
           OAuth import
         </Link>{" "}
         for provider flows that return JSON on the API host.

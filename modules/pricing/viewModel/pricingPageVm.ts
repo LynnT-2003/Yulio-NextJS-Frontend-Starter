@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { routes } from "@/lib/config/routes";
 import {
   getUserPlan,
   createCheckoutSession,
@@ -53,8 +52,8 @@ export function usePricingPageVm(): PricingPageVm {
       const origin = window.location.origin;
       const { url } = await createCheckoutSession({
         priceId,
-        successUrl: `${origin}${routes.account}?payment=success`,
-        cancelUrl: `${origin}${routes.pricing}?checkout=cancelled`,
+        successUrl: `${origin}/account?payment=success`,
+        cancelUrl: `${origin}/pricing?checkout=cancelled`,
       });
       window.location.href = url;
     } catch (e: unknown) {
@@ -78,7 +77,7 @@ export function usePricingPageVm(): PricingPageVm {
     setRedirecting(true);
     try {
       const origin = window.location.origin;
-      const { url } = await createBillingPortalSession(`${origin}${routes.account}`);
+      const { url } = await createBillingPortalSession(`${origin}/account`);
       window.location.href = url;
     } catch (e: unknown) {
       setRedirecting(false);

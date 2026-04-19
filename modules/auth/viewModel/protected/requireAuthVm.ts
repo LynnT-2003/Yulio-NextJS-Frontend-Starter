@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { routes } from "@/lib/config/routes";
 import { useAuth } from "@/providers/auth-provider";
 
 export type RequireAuthVm = {
@@ -16,7 +15,7 @@ export function useRequireAuthVm(): RequireAuthVm {
 
   React.useEffect(() => {
     if (ready && !user) {
-      router.replace(routes.login);
+      router.replace("/login");
     }
   }, [ready, user, router]);
 
